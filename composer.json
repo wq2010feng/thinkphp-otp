@@ -13,7 +13,7 @@
     },
     "require": {
         "php": ">=5.4.0",
-		"endroid/qr-code": "*"
+        "endroid/qr-code": "^4.3"
     },
     "authors": [
         {
