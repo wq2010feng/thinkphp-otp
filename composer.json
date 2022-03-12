@@ -12,7 +12,8 @@
         "issues": "https://github.com/wq2010feng/thinkphp-otp/issues"
     },
     "require": {
-        "php": ">=5.4.0"
+        "php": ">=5.4.0",
+		"endroid/qr-code": "*"
     },
     "authors": [
         {

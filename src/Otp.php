@@ -11,6 +11,11 @@
 +----------------------------------------------------------------------
 */
 namespace think\keefe;
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelLow;
+use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelMedium;
+use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelQuartile;
+use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelHigh;
 class Otp
 {
     protected $_codeLength = 6;
@@ -93,20 +98,39 @@ class Otp
      *
      * @return string
      */
-    public function getQRCodeUrl($name, $secret,$only_data = false, $title = null, $params = array())
+    public function getQRCodeUrl($name, $secret,$only_data = false,$params = [])
     {
-        $width = !empty($params['width']) && (int) $params['width'] > 0 ? (int) $params['width'] : 200;
-        $height = !empty($params['height']) && (int) $params['height'] > 0 ? (int) $params['height'] : 200;
-        $level = !empty($params['level']) && array_search($params['level'], array('L', 'M', 'Q', 'H')) !== false ? $params['level'] : 'M';
-
-        $urlencoded = urlencode('otpauth://totp/'.$name.'?secret='.$secret.'');
-        if (isset($title)) {
-            $urlencoded .= urlencode('&issuer='.urlencode($title));
-        }
-		if($only_data) {
-			return urldecode($urlencoded);
+        $size = !empty($params['size']) && (int) $params['size'] > 0 ? (int) $params['size'] : 200;
+        $margin  = !empty($params['margin']) && (int) $params['margin'] > 0 ? (int) $params['margin'] : 0;
+		$level = !empty($params['level']) ? $params['level'] : '';
+		switch($level) {
+			case 'L':
+				$level = new ErrorCorrectionLevelLow();
+				break;
+			case 'M':
+				$level = new ErrorCorrectionLevelMedium();
+				break;
+			case 'Q':
+				$level = new ErrorCorrectionLevelQuartile();
+				break;
+			case 'H':
+				$level = new ErrorCorrectionLevelHigh();
+				break;
+			default:
+				$level = new ErrorCorrectionLevelMedium();
 		}
-        return "https://api.qrserver.com/v1/create-qr-code/?data=$urlencoded&size=${width}x${height}&ecc=$level";
+		
+        $urlencoded = 'otpauth://totp/'.$name.'?secret='.$secret.'';
+		if($only_data) {
+			return $urlencoded;
+		}
+		return Builder::create()
+		    ->data($urlencoded)
+		    ->errorCorrectionLevel($level)
+		    ->size($size)
+		    ->margin($margin)
+		    ->build()
+			->getDataUri();
     }
 
     /**
