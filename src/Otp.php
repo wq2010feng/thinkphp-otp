@@ -11,20 +11,22 @@
 +----------------------------------------------------------------------
 */
 namespace think\keefe;
+
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelLow;
 use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelMedium;
 use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelQuartile;
 use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelHigh;
+
 class Otp
 {
     protected $_codeLength = 6;
-	/**
-	 * 创建一份密钥
-	 * 16个字符，从允许的32个字符中随机选择。
-	 * @param int $secret_length
-	 * @return string
-	 */
+    /**
+     * 创建一份密钥
+     * 16个字符，从允许的32个字符中随机选择。
+     * @param int $secret_length
+     * @return string
+     */
     public function createSecret($secret_length = 16)
     {
         $valid_chars = $this->_getBase32LookupTable();
@@ -33,7 +35,7 @@ class Otp
             throw new \Exception('错误的密钥长度，Bad secret length');
         }
         $secret = '';
-		$rnd = false;
+        $rnd = false;
         if (function_exists('random_bytes')) {
             $rnd = random_bytes($secret_length);
         } elseif (function_exists('mcrypt_create_iv')) {
@@ -54,8 +56,8 @@ class Otp
         return $secret;
     }
     /**
-	 * 用给定的密码和时间点计算验证码
-     * 
+     * 用给定的密码和时间点计算验证码
+     *
      * @param string   $secret
      * @param int|null $time_slice
      *
@@ -73,7 +75,7 @@ class Otp
         $time = chr(0).chr(0).chr(0).chr(0).pack('N*', $time_slice);
         // 用用户密钥散列它
         $hm = hash_hmac('SHA1', $time, $secretkey, true);
-		// 使用结果的最后一个作为索引/偏移
+        // 使用结果的最后一个作为索引/偏移
         $offset = ord(substr($hm, -1)) & 0x0F;
         // 获取结果的4个字节
         $hashpart = substr($hm, $offset, 4);
@@ -98,39 +100,39 @@ class Otp
      *
      * @return string
      */
-    public function getQRCodeUrl($name, $secret,$only_data = false,$params = [])
+    public function getQRCodeUrl($name, $secret, $only_data = false, $params = [])
     {
         $size = !empty($params['size']) && (int) $params['size'] > 0 ? (int) $params['size'] : 200;
         $margin  = !empty($params['margin']) && (int) $params['margin'] > 0 ? (int) $params['margin'] : 0;
-		$level = !empty($params['level']) ? $params['level'] : '';
-		switch($level) {
-			case 'L':
-				$level = new ErrorCorrectionLevelLow();
-				break;
-			case 'M':
-				$level = new ErrorCorrectionLevelMedium();
-				break;
-			case 'Q':
-				$level = new ErrorCorrectionLevelQuartile();
-				break;
-			case 'H':
-				$level = new ErrorCorrectionLevelHigh();
-				break;
-			default:
-				$level = new ErrorCorrectionLevelMedium();
-		}
-		
+        $level = !empty($params['level']) ? $params['level'] : '';
+        switch ($level) {
+            case 'L':
+                $level = new ErrorCorrectionLevelLow();
+                break;
+            case 'M':
+                $level = new ErrorCorrectionLevelMedium();
+                break;
+            case 'Q':
+                $level = new ErrorCorrectionLevelQuartile();
+                break;
+            case 'H':
+                $level = new ErrorCorrectionLevelHigh();
+                break;
+            default:
+                $level = new ErrorCorrectionLevelMedium();
+        }
+        
         $urlencoded = 'otpauth://totp/'.$name.'?secret='.$secret.'';
-		if($only_data) {
-			return $urlencoded;
-		}
-		return Builder::create()
-		    ->data($urlencoded)
-		    ->errorCorrectionLevel($level)
-		    ->size($size)
-		    ->margin($margin)
-		    ->build()
-			->getDataUri();
+        if ($only_data) {
+            return $urlencoded;
+        }
+        return Builder::create()
+            ->data($urlencoded)
+            ->errorCorrectionLevel($level)
+            ->size($size)
+            ->margin($margin)
+            ->build()
+            ->getDataUri();
     }
 
     /**
@@ -242,7 +244,7 @@ class Otp
 
     /**
      * 比较是否等于安全时间
-     * 
+     *
      * @param string $safeString 要检查的内部（安全）值
      * @param string $userString 用户提交的（不安全）值
      *
