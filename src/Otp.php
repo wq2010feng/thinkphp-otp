@@ -30,7 +30,7 @@ class Otp
         $valid_chars = $this->_getBase32LookupTable();
         // 有效的秘密长度为80到640位
         if ($secret_length < 16 || $secret_length > 128) {
-            throw new Exception('错误的密钥长度，Bad secret length');
+            throw new \Exception('错误的密钥长度，Bad secret length');
         }
         $secret = '';
 		$rnd = false;
@@ -49,7 +49,7 @@ class Otp
                 $secret .= $valid_chars[ord($rnd[$i]) & 31];
             }
         } else {
-            throw new Exception('没有安全的随机数据源，No source of secure random');
+            throw new \Exception('没有安全的随机数据源，No source of secure random');
         }
         return $secret;
     }
