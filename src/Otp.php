@@ -1,5 +1,13 @@
 <?php
 /*
+ * @Author: KEEFE
+ * @Email: wq2010feng@126.com
+ * @Date: 2022-04-30 09:22:28
+ * @LastEditors: KEEFE
+ * @LastEditTime: 2022-05-26 08:35:53
+ * @Description: OTP口令生成
+ */
+/*
 +----------------------------------------------------------------------
 | ThinkPHP 6 OTP ,用于处理Google Authenticator 2因素身份验证的PHP类。
 +----------------------------------------------------------------------
@@ -22,15 +30,15 @@ class Otp
 {
     protected $_codeLength = 6;
     /**
-     * 创建一份密钥
-     * 16个字符，从允许的32个字符中随机选择。
-     * @param int $secret_length
+     * 生成密钥
+     * 
+     * @param {int} $secret_length 密钥长度，范围为16-128
+     * 
      * @return string
      */
     public function createSecret($secret_length = 16)
     {
-        $valid_chars = $this->_getBase32LookupTable();
-        // 有效的秘密长度为80到640位
+        // 有效的secret长度为16到128个字符
         if ($secret_length < 16 || $secret_length > 128) {
             throw new \Exception('错误的密钥长度，Bad secret length');
         }
@@ -46,6 +54,7 @@ class Otp
                 $rnd = false;
             }
         }
+        $valid_chars = $this->_getBase32LookupTable();
         if ($rnd !== false) {
             for ($i = 0; $i < $secret_length; ++$i) {
                 $secret .= $valid_chars[ord($rnd[$i]) & 31];
@@ -56,11 +65,11 @@ class Otp
         return $secret;
     }
     /**
-     * 用给定的密码和时间点计算验证码
+     * 用给定的密钥和时间片段计算验证码
      *
      * @param string   $secret
      * @param int|null $time_slice
-     *
+     * 
      * @return string
      */
     public function getCode($secret, $time_slice = null)
@@ -97,6 +106,9 @@ class Otp
      * @param string $secret  密钥
      * @param string $title 标题
      * @param array  $params 其他参数
+     * $params['size'] 二维码大小
+     * $params['margin'] 周围空白大小
+     * $params['level'] [L|M|Q|H] 容错级别
      *
      * @return string
      */
@@ -121,18 +133,11 @@ class Otp
             default:
                 $level = new ErrorCorrectionLevelMedium();
         }
-        
         $urlencoded = 'otpauth://totp/'.$name.'?secret='.$secret.'';
         if ($only_data) {
             return $urlencoded;
         }
-        return Builder::create()
-            ->data($urlencoded)
-            ->errorCorrectionLevel($level)
-            ->size($size)
-            ->margin($margin)
-            ->build()
-            ->getDataUri();
+        return Builder::create()->data($urlencoded)->errorCorrectionLevel($level)->size($size)->margin($margin)->build()->getDataUri();
     }
 
     /**
@@ -140,18 +145,20 @@ class Otp
      *
      * @param string   $secret
      * @param string   $code
-     * @param int      $discrepancy      这是允许的时间漂移，以30秒为单位（8表示前后4分钟）
+     * @param int|null $discrepancy      这是允许的时间漂移，以30秒为单位（8表示前后4分钟）
      * @param int|null $currenttime_slice 时间片断，如果想使用其他时间，设置此参数（使用时间戳）
      *
      * @return bool
      */
     public function verifyCode($secret, $code, $discrepancy = 1, $currenttime_slice = null)
     {
-        if ($currenttime_slice === null) {
+        if ($currenttime_slice === null) {// 使用当前时间的时间戳
             $currenttime_slice = floor(time() / 30);
+        } else { // 使用传递的时间戳
+            $currenttime_slice = floor((int) $currenttime_slice / 30);
         }
 
-        if (strlen($code) != 6) {
+        if (strlen($code) != $this->_codeLength) {
             return false;
         }
 
@@ -166,7 +173,7 @@ class Otp
     }
 
     /**
-     * 设置验证码长度，应大于等于6。
+     * 设置验证码长度，应大于等于6。一般不做修改
      *
      * @param int $length
      *
